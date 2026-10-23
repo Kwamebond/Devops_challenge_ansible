@@ -1,0 +1,27 @@
+---
+all:
+  children:
+    ubuntu:
+      hosts:
+        localhost:
+          ansible_connection: local
+          ansible_python_interpreter: /usr/bin/python3
+
+    webservers:
+      hosts:
+        web01:
+          ansible_host: 192.168.57.11
+        web02:
+          ansible_host: 192.168.57.12
+
+    dbservers:
+      hosts:
+        db01:
+          ansible_host: 192.168.57.13
+
+    rocky:
+      children:
+        webservers:
+        dbservers:
+      vars:
+        ansible_user: vagrant

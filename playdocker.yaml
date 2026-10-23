@@ -1,0 +1,42 @@
+---
+- name: Update Ubuntu OS
+  hosts: ubuntu
+  become: true
+
+  tasks:
+    - name: Update Ubuntu packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+
+- name: Update Rocky Linux OS
+  hosts: rocky
+  become: true
+
+  tasks:
+    - name: Update Rocky Linux packages
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+
+- name: Deploy Docker Compose application
+  hosts: ubuntu
+  become: false
+  gather_facts: false
+
+  tasks:
+    - name: Start Docker Compose containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ playbook_dir }}"
+        state: present
+
+    - name: Check running containers
+      ansible.builtin.command:
+        cmd: docker compose ps
+        chdir: "{{ playbook_dir }}"
+      register: docker_status
+      changed_when: false
+
+    - name: Display container status
+      ansible.builtin.debug:
+        var: docker_status.stdout_lines
