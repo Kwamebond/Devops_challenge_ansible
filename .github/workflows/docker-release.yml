@@ -1,0 +1,43 @@
+name: Build, Test and Release Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build Docker image
+        run: bash scripts/docker-release.sh build test
+      - name: Test Nginx website
+        run: bash scripts/docker-release.sh test test
+
+  release:
+    name: Publish GitHub Release
+    needs: test
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build and package Docker image
+        run: bash scripts/docker-release.sh package "$GITHUB_REF_NAME"
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/docker-release.sh publish "$GITHUB_REF_NAME"
