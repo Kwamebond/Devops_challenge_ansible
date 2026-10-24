@@ -1,43 +1,30 @@
-name: Build, Test and Release Docker Image
+name: Hello World with Ansible and Docker
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - 'v*'
+    branches: [main]
+    tags: ['v*']
   pull_request:
-    branches:
-      - main
-
-permissions:
-  contents: read
+    branches: [main]
 
 jobs:
-  test:
-    name: Build and Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Build Docker image
-        run: bash scripts/docker-release.sh build test
-      - name: Test Nginx website
-        run: bash scripts/docker-release.sh test test
-
-  release:
-    name: Publish GitHub Release
-    needs: test
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+  hello-world:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Build and package Docker image
-        run: bash scripts/docker-release.sh package "$GITHUB_REF_NAME"
-      - name: Publish GitHub Release
+
+      - name: Install Ansible
+        run: python3 -m pip install ansible-core
+
+      - name: Run Ansible playbook
+        run: ansible-playbook docker-hello.yml
+
+      - name: Publish Dockerfile to GitHub Releases
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bash scripts/docker-release.sh publish "$GITHUB_REF_NAME"
+        run: gh release create "$GITHUB_REF_NAME" Dockerfile --title "Hello World $GITHUB_REF_NAME" --notes "My first Ansible and Docker Hello World release" --verify-tag
