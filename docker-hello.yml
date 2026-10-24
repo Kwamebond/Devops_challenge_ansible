@@ -1,0 +1,20 @@
+---
+- name: Run Hello World using Docker
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Build Hello World Docker image
+      ansible.builtin.command:
+        cmd: docker build -t hello-ansible .
+        chdir: "{{ playbook_dir }}"
+
+    - name: Run Hello World Docker container
+      ansible.builtin.command: docker run --rm hello-ansible
+      register: hello_output
+      changed_when: false
+
+    - name: Print Hello World output
+      ansible.builtin.debug:
+        var: hello_output.stdout
